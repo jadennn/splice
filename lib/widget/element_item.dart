@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:splice/event/event.dart';
 import 'package:splice/bean/element.dart';
@@ -11,8 +12,9 @@ import 'custom_global_key.dart';
 ///子元素布局
 class ElementWidget extends StatefulWidget {
   final ElementBean element;
+  final Function showPicker;
 
-  ElementWidget({Key key, @required this.element})
+  ElementWidget({Key key, @required this.element, this.showPicker})
       : assert(element != null),
         super(key: key);
 
@@ -33,7 +35,11 @@ class ElementWidgetState extends State<ElementWidget> {
   //构建元素
   Widget _buildElementByType() {
     if (widget.element.type == ElementType.ADD) {
-      return Icon(Icons.add);
+      return GestureDetector(child: Icon(Icons.add), onTap: (){
+        if(widget.showPicker != null){
+          widget.showPicker();
+        }
+      },);
     } else {
       return CustomGesture(
         child: CommonElement(

@@ -16,6 +16,8 @@ class DrawBoard extends StatefulWidget {
 class DrawBoardState extends State<DrawBoard> {
   List<PositedElement> _splicers;
 
+  PositedElement _selectedElement;
+
   @override
   void initState() {
     super.initState();
@@ -54,17 +56,27 @@ class DrawBoardState extends State<DrawBoard> {
     if (_splicers != null) {
       for (PositedElement element in _splicers) {
         widgets.add(Positioned.fromRect(
-          child: GestureDetector(child:CommonElement(
-            element: element.element,
-          ), onScaleStart: (details) {
-            _onScaleStart(element, details);
-          },
+          child: GestureDetector(
+            child: CommonElement(
+              element: element.element,
+              selected: element==_selectedElement,
+              onPanUpdateScale: (details){
+                _onElementPanUpdate(element, details);
+              },
+            ),
+            onScaleStart: (details) {
+              _onScaleStart(element, details);
+            },
             onScaleUpdate: (details) {
               _onScaleUpdate(element, details);
             },
             onScaleEnd: (ScaleEndDetails details) {
               _onScaleEnd(element);
-            },),
+            },
+            onTap: (){
+              _onTap(element);
+            },
+          ),
           rect: element.rect,
         ));
       }
@@ -72,10 +84,9 @@ class DrawBoardState extends State<DrawBoard> {
     return widgets;
   }
 
-
   ///窗口双手指缩放
   void _onScaleUpdate(PositedElement element, ScaleUpdateDetails details) {
-    if (this.mounted ) {
+    if (this.mounted) {
       setState(() {
         double offsetX = details.focalPoint.dx - element.lastOffset.dx;
         double offsetY = details.focalPoint.dy - element.lastOffset.dy;
@@ -83,11 +94,11 @@ class DrawBoardState extends State<DrawBoard> {
         double top = element.rect.top + offsetY;
         double width = element.initW * details.scale;
         double height = element.initH * details.scale;
-        if(details.scale != 1.0){
+        if (details.scale != 1.0) {
           double dx = element.rect.left + width - element.rect.right;
           double dy = element.rect.top + height - element.rect.bottom;
-          top -= dy/2;
-          left -= dx/2;
+          top -= dy / 2;
+          left -= dx / 2;
         }
         element.rect = Rect.fromLTWH(left, top, width, height);
         //上次的记录查询
@@ -106,7 +117,29 @@ class DrawBoardState extends State<DrawBoard> {
   ///窗口双手指缩放结束
   void _onScaleEnd(PositedElement element) {
     if (this.mounted) {
+      setState(() {});
+    }
+  }
+
+  void _onTap(PositedElement element){
+    setState(() {
+      _selectedElement = element;
+    });
+  }
+
+  ///拖拽右下角放大缩小
+  void _onElementPanUpdate(PositedElement element, DragUpdateDetails details){
+    double right = element.rect.right +  details.delta.dx;
+    double bottom = element.rect.bottom +  details.delta.dy;
+    if (right - element.rect.left < 50) {
+      right = element.rect.left + 50;
+    }
+    if (bottom - element.rect.top < 50) {
+      bottom = element.rect.top + 50;
+    }
+    if(this.mounted){
       setState(() {
+        element.rect = Rect.fromLTRB(element.rect.left, element.rect.top, right, bottom);
       });
     }
   }
